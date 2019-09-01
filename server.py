@@ -57,6 +57,9 @@ def predict():
     if request.method == "POST":
         entry = request.json['entry']
         gc = GraphCreator(entry)
+
+        if len(gc.graph.nodes) > 500:
+            return "Too Large"
         
         gc.expand_network_threaded(threads=20, chunk_size=1)
         gc.redraw_redirects()
