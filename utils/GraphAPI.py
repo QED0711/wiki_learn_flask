@@ -17,7 +17,7 @@ from sklearn.preprocessing import normalize, StandardScaler, Normalizer, RobustS
 
 import networkx as nx
 
-import signal
+# import signal
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -377,17 +377,20 @@ class GraphCreator:
         copy (default: True, bool)
         Whether or not to make a copy of the features_df. When False, overwrites the existing features_df in the class instance with the scaled version.
         """
+        # we cannot scale our node column (because it is object type)
+        # and we don't want to scale our similarity_rank as it can cause strang reordering artifacts. 
         nodes = self.features_df.node
+        sim_rank = self.features_df.similarity_rank
 
-        node_removed = self.features_df.drop("node", axis=1)
-        columns = node_removed.columns 
+        node_and_sim_removed = self.features_df.drop(["node", "similarity_rank"], axis=1)        
+        columns = node_and_sim_removed.columns 
 
-        scaled_features = scaler().fit_transform(node_removed)
-
+        scaled_features = scaler().fit_transform(node_and_sim_removed)
         scaled_features = pd.DataFrame(scaled_features, columns=columns)
-
-        scaled_features.insert(0, "node", nodes)
         
+        scaled_features.insert(0, "similarity_rank", sim_rank)
+        scaled_features.insert(0, "node", nodes)
+
         if not copy: # if copy=False, then we overwrite existing features_df with the scaled version
             self.features_df = scaled_features
             return self.features_df

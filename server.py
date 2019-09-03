@@ -29,8 +29,6 @@ from sklearn.preprocessing import normalize, StandardScaler, Normalizer, RobustS
 
 import networkx as nx
 
-
-
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -40,10 +38,10 @@ from WikiMultiQuery import wiki_multi_query
 from graph_helpers import create_dispersion_df, sort_dict_values, format_categories, compare_categories, rank_order, similarity_rank
 
 from GraphAPI import GraphCreator
+from RecommenderPipeline import Recommender
 
-
-with open("../wiki_learn/models/rf_classifier_v1.pkl", "rb") as model:
-    rf_classifier = pickle.load(model)
+with open("./models/rf_classifier_v2_normalized.pkl", "rb") as model:
+    rf_v2_classifier = pickle.load(model)
 
 application = Flask(__name__)
 CORS(application)
@@ -61,31 +59,13 @@ def predict():
         if len(gc.graph.nodes) > 500:
             return "Too Large"
         
-        gc.expand_network_threaded(threads=5, chunk_size=1)
-        gc.redraw_redirects()
-        gc.update_edge_weights()
-        features_df = gc.get_features_df(rank=False)
-        gc.rank_similarity()
-        scaled_feature_df = gc.scale_features_df(scaler=MinMaxScaler, copy=True) # Makes a copy of the df
-        sorted_scaled = scaled_feature_df.sort_values("similarity_rank", ascending=False).reset_index().drop("index", axis=1)
-
-        # drop the entry node row from recommendations
-        # limit to first 100 recommendations
-        sorted_scaled = sorted_scaled[sorted_scaled.node != gc.entry][0:100]
-
-        # format df for predictions
-        X = sorted_scaled.drop(["node", "similarity_rank"], axis=1)
-
-        y_preds = rf_classifier.predict_proba(X)
-
-        classes = list(rf_classifier.classes_)
-
-        sorted_scaled['label'] = list(map(lambda x: list(x), y_preds))
-
-        nodes = sorted_scaled[["node", "label", "similarity_rank"]].to_dict(orient="index")
-
-        results = [{"entry": entry}, {"classes": classes}, nodes]
-
+        gc = GraphCreator(entry)
+        rec = Recommender(gc, threads=20, chunk_size=1)
+        
+        rec.fit(scaler=Normalizer)
+        rec.predict(rf_v2_classifier)
+        results = rec.format_results()
+        
         return flask.jsonify(results)
 
 
