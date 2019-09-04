@@ -5,7 +5,6 @@ flask_cors
 networkx
 sklearn
 
-functools
 pandas
 numpy
 concurrent 

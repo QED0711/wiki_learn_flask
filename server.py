@@ -17,7 +17,7 @@ from url_utils import *
 import networkx as nx
 from sklearn.preprocessing import normalize, StandardScaler, Normalizer, RobustScaler, MinMaxScaler, MaxAbsScaler
 from collections import Counter
-from functools import reduce
+# from functools import reduce
 import pandas as pd
 import numpy as np
 import concurrent.futures
