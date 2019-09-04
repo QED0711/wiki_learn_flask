@@ -1,0 +1,15 @@
+gunicorn
+flask
+flask_cors
+sys
+networkx
+sklearn
+collections
+functools
+pandas
+numpy
+concurrent 
+threading
+re
+requests
+pickle
