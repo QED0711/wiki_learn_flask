@@ -67,8 +67,9 @@ def predict():
         
         rec.fit(scaler=Normalizer)
         rec.predict(rf_v2_classifier)
-        results = rec.format_results()
-        
+        results = rec.format_results(decision_threshold=0.5)        
+        results['classes'] = list(rec.classes)
+
         return flask.jsonify(results)
 
 
