@@ -54,6 +54,9 @@ def predict():
 
     if request.method == "POST":
         entry = request.json['entry']
+
+        print("Entry:", entry)
+
         gc = GraphCreator(entry)
 
         if len(gc.graph.nodes) > 500:
