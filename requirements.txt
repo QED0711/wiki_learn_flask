@@ -7,7 +7,7 @@ sklearn
 
 pandas
 numpy
-concurrent 
+
 threading
 re
 requests
