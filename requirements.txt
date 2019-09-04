@@ -1,7 +1,7 @@
 gunicorn
 flask
 flask_cors
-sys
+
 networkx
 sklearn
 collections
