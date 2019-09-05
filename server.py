@@ -49,24 +49,26 @@ CORS(application)
 @application.route('/', methods=["GET", "POST"])
 def predict():
     if request.method == "GET":
-        return "Hello World"
+        return "Server is connected"
 
     if request.method == "POST":
+        
         entry = request.json['entry']
+
         def generator(entry):
-            # yield "something here"
 
-            # yield entry
-
+            print(entry)
             gc = GraphCreator(entry)
             
-            # yield f"Layer 1 nodes: {len(gc.graph.nodes)}\n"
+            print(f"layer 1 nodes:{len(gc.graph.nodes)}")
             yield str({"layer 1 nodes":len(gc.graph.nodes)}) + "\n"
 
-            # if len(gc.graph.nodes) > 500:
-            #     return "Too Large"
+            # set max nodes limit
+            if len(gc.graph.nodes) > 500:
+                return {"error":"Network too large"}
 
             rec = Recommender(gc, threads=50, chunk_size=1)
+            print("Recommender System Initialized")
             yield "Recommender Initialized\n"
 
             # rec.fit(scaler=Normalizer)
@@ -75,17 +77,21 @@ def predict():
             rec._expand_network()
             print("expanding\n")
             yield "expanding\n"
+
             rec._graph_cleanup()
             print("cleanup\n")
             yield "cleanup\n"
+
             rec._get_features()
-            print("features\n")
+            print("extracting features\n")
             yield "features\n"
+
             rec._calculate_similarity()
-            print("similarity\n")
+            print("calculating similarity indexy\n")
             yield "similarity\n"
+
             rec.scaled = rec._scale_features(Normalizer)
-            print("scaled\n")
+            print("scaling features\n")
             yield "scaled\n"
             
             rec.predict(rf_v2_classifier)
@@ -101,17 +107,10 @@ def predict():
         return Response(stream_with_context(generator(entry)), content_type="text/event-stream")
 
 
-@application.route("/test", methods=["POST"])
-def test():
+@application.route("/connect", methods=["POST"])
+def connect():
     if request.method == "POST":
-        def generator():
-            yield "one"
-            print("sent one")
-            yield "two"
-            print("sent two")
-            yield "three"
-            print("sent three")
-        return "keeping alive"
+        return "Server Connected"
 
 
 if __name__ == "__main__":
