@@ -95,7 +95,6 @@ def predict():
             yield "Results formatted\n"
 
             results['classes'] = list(rec.classes)
-            yield "Classes added\n"
 
             yield str(results)
         
@@ -114,7 +113,7 @@ def test():
             time.sleep(3)
             yield "three"
             print("sent three")
-        return Response(generator())
+        return Response(generator(), content_type="text/event-stream")
 
 
 if __name__ == "__main__":
