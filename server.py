@@ -66,7 +66,7 @@ def predict():
             # if len(gc.graph.nodes) > 500:
             #     return "Too Large"
 
-            rec = Recommender(gc, threads=20, chunk_size=1)
+            rec = Recommender(gc, threads=50, chunk_size=1)
             yield "Recommender Initialized\n"
 
             rec.fit(scaler=Normalizer)
