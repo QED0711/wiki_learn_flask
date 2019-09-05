@@ -1,0 +1,12 @@
+runtime: python37
+env: standard
+instance_class: F4
+
+entrypoint: gunicorn -b :$PORT server:application --log-level=debug --timeout=300
+runtime_config:
+  python_version: 3
+
+resources:
+  cpu: 1
+  memory_gb: 2
+  disk_size_gb: 10
