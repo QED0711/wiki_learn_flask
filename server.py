@@ -98,7 +98,7 @@ def predict():
 
             yield str(results)
         
-        return Response(stream_with_context(generator(entry)))
+        return Response(stream_with_context(generator(entry)), content_type="text/event-stream")
 
 
 @application.route("/test", methods=["POST"])
@@ -107,13 +107,11 @@ def test():
         def generator():
             yield "one"
             print("sent one")
-            time.sleep(2)
             yield "two"
             print("sent two")
-            time.sleep(3)
             yield "three"
             print("sent three")
-        return Response(generator(), content_type="text/event-stream")
+        return "keeping alive"
 
 
 if __name__ == "__main__":
