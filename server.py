@@ -69,8 +69,24 @@ def predict():
             rec = Recommender(gc, threads=50, chunk_size=1)
             yield "Recommender Initialized\n"
 
-            rec.fit(scaler=Normalizer)
-            yield "recommend fit\n"
+            # rec.fit(scaler=Normalizer)
+            # yield "recommend fit\n"
+
+            rec._expand_network()
+            print("expanding\n")
+            yield "expanding\n"
+            rec._graph_cleanup()
+            print("cleanup\n")
+            yield "cleanup\n"
+            rec._get_features()
+            print("features\n")
+            yield "features\n"
+            rec._calculate_similarity()
+            print("similarity\n")
+            yield "similarity\n"
+            rec.scaled = rec._scale_features(Normalizer)
+            print("scaled\n")
+            yield "scaled\n"
             
             rec.predict(rf_v2_classifier)
             yield "predictions complete\n"

@@ -46,7 +46,7 @@ class Recommender:
         self.threads = threads
         self.chunk_size = chunk_size
         
-
+        self.scaled = None
 
     def fit(self, scaler=MinMaxScaler):
         self._expand_network()
