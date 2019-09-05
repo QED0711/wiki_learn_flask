@@ -9,3 +9,6 @@ pandas
 numpy
 
 requests
+
+matplotlib
+seaborn
