@@ -2,10 +2,8 @@ import sys
 sys.path.append("../")
 
 import pandas as pd
-import pymongo
 from copy import copy, deepcopy
 
-from keys import *
 
 from get_related_links import get_see_also_links
 import time
@@ -69,26 +67,6 @@ class WikiScrapper:
             article['_id'] = article['title']
         return data
     
-    def to_mlab(self):
-        
-        uri = f"mongodb://{mlab_api['username']}:{mlab_api['password']}@ds261277.mlab.com:61277/wiki_scrapper"
-        client = pymongo.MongoClient(uri)
-
-        db = client.get_default_database()
-
-        data_inserter = db["known_related"]
-        
-        # add ids to our data for so we don't save duplicates of the same topic
-        # save to a new version so that we don't overwrite any of our other data
-        links_data = self.add_ids()
-
-        for article in links_data:
-            try:
-                data_inserter.insert_one(article)
-            except:
-                continue
-
-        client.close()
 
 
 if __name__ == "__main__":
