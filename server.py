@@ -65,7 +65,8 @@ def predict():
 
             # set max nodes limit
             if len(gc.graph.nodes) > 500:
-                return {"error":"Network too large"}
+                yield str({"error":"Network too large"})
+                return
 
             rec = Recommender(gc, threads=50, chunk_size=1)
             print("Recommender System Initialized")
@@ -87,7 +88,7 @@ def predict():
             yield "features\n"
 
             rec._calculate_similarity()
-            print("calculating similarity indexy\n")
+            print("calculating similarity index\n")
             yield "similarity\n"
 
             rec.scaled = rec._scale_features(Normalizer)

@@ -25,7 +25,7 @@ warnings.filterwarnings("ignore")
 from url_utils import *
 from wiki_scrapper import WikiScrapper
 from WikiMultiQuery import wiki_multi_query
-from graph_helpers import create_dispersion_df, sort_dict_values, format_categories, compare_categories, rank_order, similarity_rank
+from graph_helpers import create_dispersion_df, dict_values_to_df, sort_dict_values, format_categories, compare_categories, rank_order, similarity_rank
 
 
 ################
@@ -132,7 +132,7 @@ class GraphCreator:
         cat_matches = {}
         for node in self.graph.nodes:
             cat_matches[node] = compare_categories(self.entry, node, self.categories, starting_count=0)
-        return sort_dict_values(cat_matches, ['node', 'category_matches_with_source'], 'category_matches_with_source', ascending=False)
+        return dict_values_to_df(cat_matches, ['node', 'category_matches_with_source'])
             
     
     def get_primary_nodes(self):
@@ -149,13 +149,13 @@ class GraphCreator:
                 primary_nodes[node] = 1
             else: 
                 primary_nodes[node] = 0
-        return sort_dict_values(primary_nodes, ["node", "primary_link"], "primary_link", ascending=False)
+        return dict_values_to_df(primary_nodes, ["node", "primary_link"])
 
     def get_degrees(self):
         """
         Get all edges of a node and its neighbors (both in and outbound).
         """
-        return sort_dict_values(dict(self.graph.degree()), ["node", "degree"], "degree",)
+        return dict_values_to_df(dict(self.graph.degree()), ["node", "degree"])
 
     def get_shared_neighbors_with_entry_score(self):
         """
@@ -170,7 +170,7 @@ class GraphCreator:
             # score is neighbors shared over how many possible unique neighbors could have been shared. 
             shared_neighbors_score[node] = shared_neighbors / len(set(entry_neighbors + target_neighbors))
 
-        return sort_dict_values(shared_neighbors_score, ["node", "shared_neighbors_with_entry_score"], "shared_neighbors_with_entry_score", ascending=False)
+        return dict_values_to_df(shared_neighbors_score, ["node", "shared_neighbors_with_entry_score"])
 
     def get_edges(self):
         """
@@ -188,7 +188,7 @@ class GraphCreator:
         """
         Gets the eigenvector centrality of each node.
         """
-        return sort_dict_values(nx.eigenvector_centrality(self.graph, weight="weight"), ["node", "centrality"], "centrality")
+        return dict_values_to_df(nx.eigenvector_centrality(self.graph, weight="weight"), ["node", "centrality"])
 
     def get_dispersion(self, comparison_node=None, max_nodes=25_000): # depreciated
         """
@@ -198,11 +198,11 @@ class GraphCreator:
             comparison_node = self.entry
             
         if max_nodes is None or len(self.graph.nodes) <= max_nodes:
-            return sort_dict_values(nx.dispersion(self.graph, u=comparison_node), ['node', 'dispersion'], 'dispersion')
+            return dict_values_to_df(nx.dispersion(self.graph, u=comparison_node), ['node', 'dispersion'])
         else:
             # if the network is too large, perform calculation on ego graph of entry node
             ego = self.create_ego()
-            return sort_dict_values(nx.dispersion(ego, u=comparison_node), ['node', 'dispersion'], 'dispersion')
+            return dict_values_to_df(nx.dispersion(ego, u=comparison_node), ['node', 'dispersion'])
 
     def get_pageranks(self):
         """
@@ -217,7 +217,7 @@ class GraphCreator:
         """
         Gets the reciprocity score for each node. Note: Reciprocity in the context or Wikipedia articles can be a misleading metric. The intended use of this method is to be called in the `get_adjusted_reciprocity` method, which accounts for how many connects a node has.
         """
-        return sort_dict_values(nx.algorithms.reciprocity(self.graph, self.graph.nodes), ['node', 'reciprocity'], 'reciprocity')
+        return dict_values_to_df(nx.algorithms.reciprocity(self.graph, self.graph.nodes), ['node', 'reciprocity'])
 
     def get_adjusted_reciprocity(self):
         """
@@ -279,38 +279,7 @@ class GraphCreator:
             jaccard_scores[node] = in_edge_intersect / in_edge_union
 
 
-        return sort_dict_values(jaccard_scores, ["node", "jaccard_similarity"], "jaccard_similarity", ascending=False)
-
-
-    def get_dominator_counts(self, source=None): 
-        """
-        Gets local dominator score for each node. Not included infeatures_df because it can take some time to calculate. 
-        """
-        if not source:
-            source = self.entry
-            
-        dom_dict = nx.algorithms.dominance.immediate_dominators(self.graph, start=source)
-        
-        dom_counts = {}
-
-        for key, value in dom_dict.items():
-            if value in dom_counts:
-                dom_counts[value] += 1
-            else:
-                dom_counts[value] = 1
-        for node in self.graph.nodes:
-            if not node in dom_counts:
-                dom_counts[node] = 0
-        
-        return sort_dict_values(dom_counts, ['node', 'immediate_dominator_count'], 'immediate_dominator_count')
-
-    def get_hits(self):
-        """
-        Gets the authority and hub scores for each node. Not included in features_df because it can take some time to calculate. 
-        """
-        hits = nx.algorithms.link_analysis.hits_alg.hits(self.graph, max_iter=1000)
-        return (sort_dict_values(hits[1], ['node', 'hits_authority'], 'hits_authority')
-                .merge(sort_dict_values(hits[0], ['node', 'hits_hub'], 'hits_hub'), on="node"))
+        return dict_values_to_df(jaccard_scores, ["node", "jaccard_similarity"])
     
     def get_features_df(self, rank=False):
         """
@@ -328,7 +297,6 @@ class GraphCreator:
             dfs.append(rank_order(self.get_shared_neighbors_with_entry_score(), 'shared_neighbors_with_entry_score', ascending=False))
             dfs.append(self.get_edges())
             dfs.append(rank_order(self.get_centrality(), 'centrality', ascending=True))
-            # dfs.append(rank_order(self.get_dispersion(), "dispersion", ascending=True))
             dfs.append(rank_order(self.get_pageranks(), "page_rank", ascending=False))
             dfs.append(rank_order(self.get_adjusted_reciprocity(), "adjusted_reciprocity", ascending=False))
             dfs.append(rank_order(self.get_shortest_path_from_entry(), "shortest_path_length_from_entry", ascending=True))
@@ -342,7 +310,6 @@ class GraphCreator:
             dfs.append(self.get_edges())
             dfs.append(self.get_shared_neighbors_with_entry_score())
             dfs.append(self.get_centrality())
-            # dfs.append(self.get_dispersion())
             dfs.append(self.get_pageranks())
             dfs.append(self.get_adjusted_reciprocity())
             dfs.append(self.get_shortest_path_from_entry())
@@ -511,7 +478,7 @@ class GraphCreator:
             self.query_articles(nodes)
             # signal.alarm(0)
         except:
-            pass
+            return
             # signal.alarm(0)
         return
 

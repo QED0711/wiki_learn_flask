@@ -46,7 +46,7 @@ class Recommender:
         self.threads = threads
         self.chunk_size = chunk_size
         
-        self.scaled = None
+
 
     def fit(self, scaler=MinMaxScaler):
         self._expand_network()
@@ -60,7 +60,7 @@ class Recommender:
         
         self.classes = model.classes_
 
-        # change these drop terms according to the best model
+        # change these drop terms according to what the model expects
         X = self.scaled.drop([
             "node", 
             "similarity_rank",
@@ -71,7 +71,7 @@ class Recommender:
         ], axis=1)[:size]
         preds = [list(x) for x in model.predict_proba(X)]
 
-        result = self.scaled[["node", "similarity_rank"]][:size]
+        result = self.scaled[:size].copy()
         result["label_proba"] = preds
 
         result = result[result.node != self.gc.entry]
@@ -121,7 +121,9 @@ class Recommender:
             "predictions": self.predictions
         }
 
-        
+    ##########################
+    # INTERNAL GRAPH METHODS #
+    ##########################
 
     def _expand_network(self):
         self.gc.expand_network_threaded(threads=self.threads, chunk_size=self.chunk_size)
@@ -144,7 +146,3 @@ class Recommender:
     
 
 
-
-
-if __name__ == "__main__":
-    pass

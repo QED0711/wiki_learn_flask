@@ -1,9 +1,13 @@
 from urllib.parse import unquote
 
 def parse_url(url):
+    """
+    returns a parsed url with utf-8 encoding
+    """
     return unquote(url)
 
 def get_title(url):
+    """returns an article title from a url and replaces and "_" with spaces"""
     return parse_url(url.split("/")[-1]).replace("_", " ")
 
 
