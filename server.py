@@ -24,6 +24,7 @@ import concurrent.futures
 import threading
 import re
 import requests
+import json
 # import pdb
 # import seaborn as sns
 # import matplotlib.pyplot as plt
@@ -64,7 +65,7 @@ def predict():
             yield str({"layer 1 nodes":len(gc.graph.nodes)}) + "\n"
 
             # set max nodes limit
-            if len(gc.graph.nodes) > 500:
+            if len(gc.graph.nodes) > 575:
                 yield str({"error":"Network too large"})
                 return
 
@@ -102,8 +103,8 @@ def predict():
             yield "Results formatted\n"
 
             results['classes'] = list(rec.classes)
-
-            yield str(results)
+            
+            yield json.dumps(results)
         
         return Response(stream_with_context(generator(entry)), content_type="text/event-stream")
 
