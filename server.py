@@ -1,35 +1,30 @@
 
+import sys
+sys.path.append("./utils")
+
+
+import pickle
+import json
+import requests
+import re
+import threading
+import concurrent.futures
+import numpy as np
+import pandas as pd
+from collections import Counter
+from sklearn.preprocessing import normalize, StandardScaler, Normalizer, RobustScaler, MinMaxScaler, MaxAbsScaler
+import networkx as nx
+from url_utils import *
+from wiki_scrapper import WikiScrapper
+from WikiMultiQuery import wiki_multi_query
+from graph_helpers import create_dispersion_df, sort_dict_values, format_categories, compare_categories, rank_order, similarity_rank
+from GraphAPI import GraphCreator
+from RecommenderPipeline import Recommender
 import flask
 from flask import Flask, request, Response, stream_with_context
 from flask_cors import CORS
 
-import sys
-sys.path.append("./utils")
 
-from RecommenderPipeline import Recommender
-from GraphAPI import GraphCreator
-from graph_helpers import create_dispersion_df, sort_dict_values, format_categories, compare_categories, rank_order, similarity_rank
-from WikiMultiQuery import wiki_multi_query
-from wiki_scrapper import WikiScrapper
-from url_utils import *
-
-# import warnings
-import networkx as nx
-from sklearn.preprocessing import normalize, StandardScaler, Normalizer, RobustScaler, MinMaxScaler, MaxAbsScaler
-from collections import Counter
-# from functools import reduce
-import pandas as pd
-import numpy as np
-import concurrent.futures
-import threading
-import re
-import requests
-import json
-# import pdb
-# import seaborn as sns
-# import matplotlib.pyplot as plt
-import pickle
-# import time
 
 
 ###########
@@ -53,20 +48,20 @@ def predict():
         return "Server is connected"
 
     if request.method == "POST":
-        
+
         entry = request.json['entry']
 
         def generator(entry):
 
             print(entry)
             gc = GraphCreator(entry)
-            
+
             print(f"layer 1 nodes:{len(gc.graph.nodes)}")
-            yield str({"layer 1 nodes":len(gc.graph.nodes)}) + "\n"
+            yield str({"layer 1 nodes": len(gc.graph.nodes)}) + "\n"
 
             # set max nodes limit
             if len(gc.graph.nodes) > 575:
-                yield str({"error":"Network too large"})
+                yield str({"error": "Network too large"})
                 return
 
             rec = Recommender(gc, threads=50, chunk_size=1)
@@ -95,7 +90,7 @@ def predict():
             rec.scaled = rec._scale_features(Normalizer)
             print("scaling features\n")
             yield "scaled\n"
-            
+
             rec.predict(rf_v2_classifier)
             yield "predictions complete\n"
 
@@ -103,9 +98,9 @@ def predict():
             yield "Results formatted\n"
 
             results['classes'] = list(rec.classes)
-            
+
             yield json.dumps(results)
-        
+
         return Response(stream_with_context(generator(entry)), content_type="text/event-stream")
 
 
