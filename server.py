@@ -8,6 +8,7 @@ import json
 import requests
 import re
 import threading
+import pymongo
 import concurrent.futures
 import numpy as np
 import pandas as pd
@@ -15,6 +16,7 @@ from collections import Counter
 from sklearn.preprocessing import normalize, StandardScaler, Normalizer, RobustScaler, MinMaxScaler, MaxAbsScaler
 import networkx as nx
 from url_utils import *
+from keys import *
 from wiki_scrapper import WikiScrapper
 from WikiMultiQuery import wiki_multi_query
 from graph_helpers import create_dispersion_df, sort_dict_values, format_categories, compare_categories, rank_order, similarity_rank
@@ -22,6 +24,7 @@ from GraphAPI import GraphCreator
 from RecommenderPipeline import Recommender
 import flask
 from flask import Flask, request, Response, stream_with_context
+from flask_api import status
 from flask_cors import CORS
 
 
@@ -103,6 +106,25 @@ def predict():
 
         return Response(stream_with_context(generator(entry)), content_type="text/event-stream")
 
+
+@application.route('/save', methods=["POST"])
+def save():
+    # get user labeled submitted data
+    submission = request.json['submission']
+    
+    # setup for pymongo connection to mlab
+    uri = f"mongodb://{mlab_api['username']}:{mlab_api['password']}@ds261277.mlab.com:61277/wiki_scrapper"    
+
+    client = pymongo.MongoClient(uri)
+    db = client.get_default_database()
+    data_inserter = db["userLabeled"]
+
+    data_inserter.insert_one(submission)
+
+    client.close()
+
+    # return success
+    return "submission received", status.HTTP_201_CREATED
 
 @application.route("/connect", methods=["POST"])
 def connect():
